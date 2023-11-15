@@ -24,7 +24,7 @@ router.get('/', async (req, res, next) => {
 
     res.json(people)
   }
-  catch(e) {
+  catch (e) {
     next(e)
   }
 })
@@ -44,7 +44,7 @@ router.get('/:id', async (req, res, next) => {
 
     res.json(person)
   }
-  catch(e) {
+  catch (e) {
     next(e)
   }
 })
@@ -65,7 +65,7 @@ router.get('/:id/similar', async (req, res, next) => {
 
     res.json(people)
   }
-  catch(e) {
+  catch (e) {
     next(e)
   }
 })
@@ -88,7 +88,7 @@ router.get('/:id/acted', async (req, res, next) => {
 
     res.json(movies)
   }
-  catch(e) {
+  catch (e) {
     next(e)
   }
 })
@@ -111,7 +111,7 @@ router.get('/:id/directed', async (req, res, next) => {
 
     res.json(movies)
   }
-  catch(e) {
+  catch (e) {
     next(e)
   }
 })

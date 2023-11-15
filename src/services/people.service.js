@@ -1,6 +1,7 @@
 import NotFoundError from '../errors/not-found.error.js'
 import { pacino, people } from '../../test/fixtures/people.js'
 import { toNativeTypes } from '../utils.js'
+import { int } from 'neo4j-driver'
 
 // TODO: Import the `int` function from neo4j-driver
 
@@ -39,8 +40,27 @@ export default class PeopleService {
   // tag::all[]
   async all(q, sort = 'name', order = 'ASC', limit = 6, skip = 0) {
     // TODO: Get a list of people from the database
+    const session = await this.driver.session()
+    const query = `
+    MATCH (p:Person)
+    ${q !== undefined ? 'WHERE p.name CONTAINS $q' : ''}
+    RETURN p { .* } AS person
+    ORDER BY p.${sort} ${order}
+    SKIP $skip
+    LIMIT $limit
+    `
+    const res = await session.executeRead(
+      tx => tx.run(
+        query,
+        { q, limit: int(limit), skip: int(skip) }
+      )
+    )
 
-    return people.slice(skip, skip + limit)
+    await session.close()
+
+    if (res.records.length === 0) throw new NotFoundError('Person not found')
+
+    return res.records.map(record => toNativeTypes(record.get('person')))
   }
   // end::all[]
 
@@ -56,8 +76,28 @@ export default class PeopleService {
   // tag::findById[]
   async findById(id) {
     // TODO: Find a user by their ID
+    const session = await this.driver.session()
+    const query = `
+    MATCH (p:Person {tmdbId: $id})
+    RETURN p {
+      .*,
+      actedCount: count { (p)-[:ACTED_IN]->() },
+      directedCount: count { (p)-[:DIRECTED]->() }
+    } AS person
+    `
 
-    return pacino
+    const res = await session.executeRead(
+      tx => tx.run(
+        query,
+        { id }
+      )
+    )
+
+    await session.close()
+
+    if (res.records.length === 0) throw new NotFoundError('Person not found')
+
+    return toNativeTypes(res.records[0].get('person'))
   }
   // end::findById[]
 
@@ -74,8 +114,29 @@ export default class PeopleService {
   // tag::getSimilarPeople[]
   async getSimilarPeople(id, limit = 6, skip = 0) {
     // TODO: Get a list of similar people to the person by their id
+    // Get a list of similar people to the person by their id
+    const session = this.driver.session()
 
-    return people.slice(skip, skip + limit)
+    const res = await session.executeRead(
+      tx => tx.run(`
+      MATCH (:Person {tmdbId: $id})-[:ACTED_IN|DIRECTED]->(m)<-[r:ACTED_IN|DIRECTED]-(p)
+      WITH p, collect(m {.tmdbId, .title, type: type(r)}) AS inCommon
+      RETURN p {
+        .*,
+        actedCount: count { (p)-[:ACTED_IN]->() },
+        directedCount: count {(p)-[:DIRECTED]->() },
+        inCommon: inCommon
+      } AS person
+      ORDER BY size(person.inCommon) DESC
+      SKIP $skip
+      LIMIT $limit
+    `, { id, limit: int(limit), skip: int(skip) })
+    )
+
+    await session.close()
+
+    return res.records.map(row => toNativeTypes(row.get('person')))
+
   }
   // end::getSimilarPeople[]
 

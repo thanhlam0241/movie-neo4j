@@ -6,7 +6,7 @@ import neo4j from 'neo4j-driver'
  * @type {neo4j.Driver}
  */
 // tag::driver[]
-const  {NEO4J_URI,NEO4J_USERNAME,NEO4J_PASSWORD} = process.env
+const { NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD } = process.env
 let driver
 // end::driver[]
 
@@ -33,12 +33,12 @@ export async function initDriver(uri, username, password) {
       },
     }
   )
-  await driver.verifyConnectivity()
+  await driver.verifyAuthentication()
   return driver
 }
 // end::initDriver[]
 
-initDriver(NEO4J_URI,NEO4J_USERNAME,NEO4J_PASSWORD)
+// initDriver(NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD)
 
 /**
  * Get the instance of the Neo4j Driver created in the

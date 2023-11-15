@@ -22,7 +22,7 @@ router.get('/', async (req, res, next) => {
 
     res.json(genres)
   }
-  catch(e) {
+  catch (e) {
     next(e)
   }
 })
@@ -47,7 +47,7 @@ router.get('/:name', async (req, res, next) => {
 
     res.json(genre)
   }
-  catch(e) {
+  catch (e) {
     next(e)
   }
 })
@@ -69,7 +69,7 @@ router.get('/:name/movies', async (req, res, next) => {
 
     res.json(movies)
   }
-  catch(e) {
+  catch (e) {
     next(e)
   }
 })

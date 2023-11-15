@@ -45,7 +45,7 @@ router.post('/register', async (req, res, next) => {
 
     res.json(output)
   }
-  catch(e) {
+  catch (e) {
     next(e)
   }
 })

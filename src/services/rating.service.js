@@ -40,8 +40,32 @@ export default class ReviewService {
   // tag::forMovie[]
   async forMovie(id, sort = 'timestamp', order = 'ASC', limit = 6, skip = 0) {
     // TODO: Get ratings for a Movie
+    const session = await this.driver.session()
 
-    return ratings
+    const query = `
+    MATCH (u:User)-[r:RATED]->(m:Movie {tmdbId: $id})
+      RETURN r {
+        .rating,
+        .timestamp,
+        user: u {
+          .id, .name
+        }
+      } AS review
+      ORDER BY r.\`${sort}\` ${order}
+      SKIP $skip
+      LIMIT $limit
+    `
+
+    const res = await session.executeRead(
+      tx => tx.run(
+        query,
+        { id, limit: int(limit), skip: int(skip) }
+      )
+    )
+
+    await session.close()
+
+    return res.records.map(row => toNativeTypes(row.get('review')))
   }
   // end::forMovie[]
 
@@ -84,14 +108,14 @@ export default class ReviewService {
     session.close()
 
     // Check User and Movie exist
-    if ( res.records.length === 0 ) {
+    if (res.records.length === 0) {
       throw new NotFoundError(
-       `Could not create rating for Movie ${movieId} by User ${userId}`
+        `Could not create rating for Movie ${movieId} by User ${userId}`
       )
     }
     // TODO: Return movie details and a rating
     // Return movie details and rating
-    const [ first ] = res.records
+    const [first] = res.records
     const movie = first.get('movie')
 
     return toNativeTypes(movie)
